@@ -3,32 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OOXX 遠端連線版</title>
+    <title>OOXX 雲端對戰最終版</title>
     <style>
-        :root { --bg-color: #f0f2f5; --cell-size: 100px; --x-color: #ff4d4d; --o-color: #3b82f6; }
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); }
-        .setup { margin-bottom: 20px; text-align: center; }
-        .board { display: grid; grid-template-columns: repeat(3, var(--cell-size)); gap: 10px; background: #ccc; padding: 10px; border-radius: 10px; display: none; }
-        .cell { width: var(--cell-size); height: var(--cell-size); background: white; display: flex; align-items: center; justify-content: center; font-size: 3rem; cursor: pointer; border-radius: 5px; }
-        .cell.x { color: var(--x-color); } .cell.o { color: var(--o-color); }
-        .status { font-size: 1.2rem; margin: 20px; font-weight: bold; }
-        input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
-        button { padding: 8px 15px; cursor: pointer; background: #333; color: white; border: none; border-radius: 5px; }
+        :root {
+            --bg-color: #f8f9fa;
+            --cell-size: 100px;
+            --x-color: #ff4d4d;
+            --o-color: #3b82f6;
+            --win-bg: #d4edda;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+        }
+
+        .setup-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-weight: bold;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, var(--cell-size));
+            grid-template-rows: repeat(3, var(--cell-size));
+            gap: 12px;
+            background-color: #dee2e6;
+            padding: 12px;
+            border-radius: 12px;
+            display: none; /* 初始隱藏 */
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .cell:hover { background-color: #f1f3f5; }
+        .cell.x { color: var(--x-color); }
+        .cell.o { color: var(--o-color); }
+        .cell.winner-cell { background-color: var(--win-bg); }
+
+        input {
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 150px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1rem;
+            background-color: #212529;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        button:hover { opacity: 0.9; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <h1>OOXX 遠端連線版</h1>
-
-    <div class="setup" id="setup-area">
-        <input type="text" id="room-id" placeholder="輸入房間號碼 (如: 888)">
+    <div id="setup-screen" class="setup-container">
+        <h1>OOXX 雲端對戰</h1>
+        <p>輸入房間號碼連線：</p>
+        <input type="text" id="room-input" placeholder="例如: 777" maxlength="10">
+        <br>
         <button onclick="joinRoom()">進入房間</button>
-        <p style="font-size: 0.8rem; color: #666;">與朋友輸入相同號碼即可連線</p>
     </div>
 
-    <div class="status" id="status">請先進入房間</div>
+    <div id="game-status" class="status hidden">等待玩家加入...</div>
 
-    <div class="board" id="board">
+    <div id="board" class="board">
         <div class="cell" onclick="makeMove(0)" id="c0"></div>
         <div class="cell" onclick="makeMove(1)" id="c1"></div>
         <div class="cell" onclick="makeMove(2)" id="c2"></div>
@@ -40,12 +121,13 @@
         <div class="cell" onclick="makeMove(8)" id="c8"></div>
     </div>
 
-    <button onclick="resetGame()" style="margin-top:20px; display:none;" id="reset-btn">重新開始</button>
+    <button id="reset-btn" class="hidden" onclick="resetGame()" style="margin-top: 25px; background-color: #6c757d;">重新開始</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+        // 你的 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyBiRD8NX4VkzySZACcbccTn0t8KkHLCWKA",
             authDomain: "ooxx-test.firebaseapp.com",
@@ -58,78 +140,121 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+
         let currentRoom = "";
         let myRole = ""; // X 或 O
-        let currentTurn = "X";
         let gameState = Array(9).fill("");
+        let currentTurn = "X";
+        let isGameActive = true;
 
+        // 加入房間邏輯
         window.joinRoom = () => {
-            const id = document.getElementById('room-id').value;
-            if (!id) return alert("請輸入房間號碼");
-            currentRoom = id;
+            const roomId = document.getElementById('room-input').value.trim();
+            if (!roomId) return alert("請輸入房間號碼！");
             
-            // 監聽房間數據
+            currentRoom = roomId;
             const roomRef = ref(db, 'rooms/' + currentRoom);
+
+            // 監聽 Firebase 數據變動
             onValue(roomRef, (snapshot) => {
                 const data = snapshot.val();
+                
                 if (!data) {
-                    // 房間不存在，初始化房間
+                    // 房間是空的，我是 X
                     myRole = "X";
-                    updateRoom({ board: gameState, turn: "X" });
+                    updateFirebase({
+                        board: Array(9).fill(""),
+                        turn: "X",
+                        winner: ""
+                    });
                 } else {
-                    if (!myRole) myRole = "O"; // 第二個進來的人是 O
+                    // 如果還沒設定角色，第一個進來是 X，第二個是 O
+                    if (!myRole) myRole = (data.board.filter(x => x!=="").length === 0) ? "X" : "O";
+                    
                     gameState = data.board;
                     currentTurn = data.turn;
-                    renderBoard();
-                    checkWinner();
+                    const winner = data.winner;
+
+                    updateUI(winner);
                 }
-                document.getElementById('setup-area').style.display = 'none';
-                document.getElementById('board').style.display = 'grid';
-                document.getElementById('reset-btn').style.display = 'block';
-                updateStatus();
+            });
+
+            // 切換顯示介面
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-status').classList.remove('hidden');
+            document.getElementById('board').style.display = 'grid';
+            document.getElementById('reset-btn').classList.remove('hidden');
+        };
+
+        // 點擊落子
+        window.makeMove = (index) => {
+            if (!isGameActive || gameState[index] !== "" || currentTurn !== myRole) return;
+
+            gameState[index] = myRole;
+            const winner = checkWinnerLocal(gameState);
+            const nextTurn = myRole === "X" ? "O" : "X";
+
+            updateFirebase({
+                board: gameState,
+                turn: nextTurn,
+                winner: winner || (gameState.includes("") ? "" : "draw")
             });
         };
 
-        function updateRoom(data) {
-            set(ref(db, 'rooms/' + currentRoom), data);
-        }
-
-        window.makeMove = (index) => {
-            if (gameState[index] !== "" || currentTurn !== myRole) return;
-            
-            gameState[index] = myRole;
-            const nextTurn = myRole === "X" ? "O" : "X";
-            updateRoom({ board: gameState, turn: nextTurn });
-        };
-
-        function renderBoard() {
+        // 更新 UI 畫面
+        function updateUI(winner) {
+            // 更新棋盤文字
             gameState.forEach((val, i) => {
                 const cell = document.getElementById(`c${i}`);
                 cell.innerText = val;
                 cell.className = `cell ${val.toLowerCase()}`;
             });
-        }
 
-        function updateStatus() {
-            const statusEl = document.getElementById('status');
-            statusEl.innerText = `你是 ${myRole} | 現在輪到: ${currentTurn}`;
-        }
+            const statusEl = document.getElementById('game-status');
 
-        function checkWinner() {
-            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            for (let combo of wins) {
-                const [a, b, c] = combo;
-                if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
-                    document.getElementById('status').innerText = `玩家 ${gameState[a]} 獲勝！ 🎉`;
-                    return;
+            if (winner) {
+                isGameActive = false;
+                if (winner === "draw") {
+                    statusEl.innerText = "雙方平手！ 🤝";
+                } else {
+                    statusEl.innerText = `玩家 ${winner} 獲勝了！ 🎉`;
+                }
+            } else {
+                isGameActive = true;
+                statusEl.innerText = `你是 ${myRole} | 輪到: ${currentTurn}`;
+                if (currentTurn === myRole) {
+                    statusEl.style.color = "#28a745";
+                } else {
+                    statusEl.style.color = "#6c757d";
                 }
             }
-            if (!gameState.includes("")) document.getElementById('status').innerText = "平手！ 🤝";
         }
 
+        // 本地判定勝負
+        function checkWinnerLocal(squares) {
+            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let combo of lines) {
+                const [a, b, c] = combo;
+                if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+                    return squares[a];
+                }
+            }
+            return null;
+        }
+
+        // 重置遊戲
         window.resetGame = () => {
-            updateRoom({ board: Array(9).fill(""), turn: "X" });
+            updateFirebase({
+                board: Array(9).fill(""),
+                turn: "X",
+                winner: ""
+            });
         };
+
+        // 輔助函式：寫入資料庫
+        function updateFirebase(data) {
+            set(ref(db, 'rooms/' + currentRoom), data);
+        }
     </script>
 </body>
 </html>

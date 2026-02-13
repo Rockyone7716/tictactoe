@@ -5,95 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OOXX 雲端對戰最終版</title>
     <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --cell-size: 100px;
-            --x-color: #ff4d4d;
-            --o-color: #3b82f6;
-            --win-bg: #d4edda;
-        }
-
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: var(--bg-color);
-        }
-
-        .setup-container {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .status {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            padding: 10px 20px;
-            border-radius: 50px;
-            background: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            font-weight: bold;
-        }
-
-        .board {
-            display: grid;
-            grid-template-columns: repeat(3, var(--cell-size));
-            grid-template-rows: repeat(3, var(--cell-size));
-            gap: 12px;
-            background-color: #dee2e6;
-            padding: 12px;
-            border-radius: 12px;
-            display: none; /* 初始隱藏 */
-        }
-
-        .cell {
-            width: var(--cell-size);
-            height: var(--cell-size);
-            background-color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .cell:hover { background-color: #f1f3f5; }
-        .cell.x { color: var(--x-color); }
-        .cell.o { color: var(--o-color); }
-        .cell.winner-cell { background-color: var(--win-bg); }
-
-        input {
-            padding: 12px;
-            font-size: 1rem;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            width: 150px;
-            margin-bottom: 15px;
-        }
-
-        button {
-            padding: 12px 25px;
-            font-size: 1rem;
-            background-color: #212529;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-
-        button:hover { opacity: 0.9; }
+        :root { --bg-color: #f8f9fa; --cell-size: 100px; --x-color: #ff4d4d; --o-color: #3b82f6; --win-bg: #d4edda; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: var(--bg-color); }
+        .setup-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; margin-bottom: 20px; }
+        .status { font-size: 1.2rem; margin-bottom: 20px; padding: 10px 20px; border-radius: 50px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-weight: bold; }
+        .board { display: grid; grid-template-columns: repeat(3, var(--cell-size)); gap: 12px; background-color: #dee2e6; padding: 12px; border-radius: 12px; display: none; }
+        .cell { width: var(--cell-size); height: var(--cell-size); background: white; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: bold; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+        .cell.x { color: var(--x-color); } .cell.o { color: var(--o-color); }
+        input { padding: 12px; font-size: 1rem; border: 2px solid #ddd; border-radius: 8px; width: 150px; margin-bottom: 15px; }
+        button { padding: 12px 25px; font-size: 1rem; background: #212529; color: white; border: none; border-radius: 8px; cursor: pointer; }
         .hidden { display: none; }
     </style>
 </head>
@@ -101,33 +21,31 @@
 
     <div id="setup-screen" class="setup-container">
         <h1>OOXX 雲端對戰</h1>
-        <p>輸入房間號碼連線：</p>
-        <input type="text" id="room-input" placeholder="例如: 777" maxlength="10">
+        <input type="text" id="room-input" placeholder="房間號碼" maxlength="10">
         <br>
         <button onclick="joinRoom()">進入房間</button>
     </div>
 
-    <div id="game-status" class="status hidden">等待玩家加入...</div>
+    <div id="game-status" class="status hidden">請先進入房間</div>
 
     <div id="board" class="board">
-        <div class="cell" onclick="makeMove(0)" id="c0"></div>
-        <div class="cell" onclick="makeMove(1)" id="c1"></div>
-        <div class="cell" onclick="makeMove(2)" id="c2"></div>
-        <div class="cell" onclick="makeMove(3)" id="c3"></div>
-        <div class="cell" onclick="makeMove(4)" id="c4"></div>
-        <div class="cell" onclick="makeMove(5)" id="c5"></div>
-        <div class="cell" onclick="makeMove(6)" id="c6"></div>
-        <div class="cell" onclick="makeMove(7)" id="c7"></div>
-        <div class="cell" onclick="makeMove(8)" id="c8"></div>
+        <div class="cell" onclick="handleMove(0)" id="c0"></div>
+        <div class="cell" onclick="handleMove(1)" id="c1"></div>
+        <div class="cell" onclick="handleMove(2)" id="c2"></div>
+        <div class="cell" onclick="handleMove(3)" id="c3"></div>
+        <div class="cell" onclick="handleMove(4)" id="c4"></div>
+        <div class="cell" onclick="handleMove(5)" id="c5"></div>
+        <div class="cell" onclick="handleMove(6)" id="c6"></div>
+        <div class="cell" onclick="handleMove(7)" id="c7"></div>
+        <div class="cell" onclick="handleMove(8)" id="c8"></div>
     </div>
 
-    <button id="reset-btn" class="hidden" onclick="resetGame()" style="margin-top: 25px; background-color: #6c757d;">重新開始</button>
+    <button id="reset-btn" class="hidden" onclick="resetGame()" style="margin-top: 25px; background: #6c757d;">重新開始</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // 你的 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyBiRD8NX4VkzySZACcbccTn0t8KkHLCWKA",
             authDomain: "ooxx-test.firebaseapp.com",
@@ -140,121 +58,72 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        let currentRoom = "", myRole = "", gameState = Array(9).fill(""), currentTurn = "X", isGameActive = true;
 
-        let currentRoom = "";
-        let myRole = ""; // X 或 O
-        let gameState = Array(9).fill("");
-        let currentTurn = "X";
-        let isGameActive = true;
-
-        // 加入房間邏輯
         window.joinRoom = () => {
             const roomId = document.getElementById('room-input').value.trim();
             if (!roomId) return alert("請輸入房間號碼！");
-            
             currentRoom = roomId;
-            const roomRef = ref(db, 'rooms/' + currentRoom);
-
-            // 監聽 Firebase 數據變動
-            onValue(roomRef, (snapshot) => {
+            
+            onValue(ref(db, 'rooms/' + currentRoom), (snapshot) => {
                 const data = snapshot.val();
-                
                 if (!data) {
-                    // 房間是空的，我是 X
                     myRole = "X";
-                    updateFirebase({
-                        board: Array(9).fill(""),
-                        turn: "X",
-                        winner: ""
-                    });
+                    updateDb({ board: Array(9).fill(""), turn: "X", winner: "" });
                 } else {
-                    // 如果還沒設定角色，第一個進來是 X，第二個是 O
                     if (!myRole) myRole = (data.board.filter(x => x!=="").length === 0) ? "X" : "O";
-                    
                     gameState = data.board;
                     currentTurn = data.turn;
-                    const winner = data.winner;
-
-                    updateUI(winner);
+                    syncUI(data.winner);
                 }
             });
 
-            // 切換顯示介面
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-status').classList.remove('hidden');
             document.getElementById('board').style.display = 'grid';
             document.getElementById('reset-btn').classList.remove('hidden');
         };
 
-        // 點擊落子
-        window.makeMove = (index) => {
-            if (!isGameActive || gameState[index] !== "" || currentTurn !== myRole) return;
-
-            gameState[index] = myRole;
-            const winner = checkWinnerLocal(gameState);
-            const nextTurn = myRole === "X" ? "O" : "X";
-
-            updateFirebase({
+        window.handleMove = (i) => {
+            if (!isGameActive || gameState[i] !== "" || currentTurn !== myRole) return;
+            gameState[i] = myRole;
+            const winner = checkWinner(gameState);
+            updateDb({
                 board: gameState,
-                turn: nextTurn,
+                turn: myRole === "X" ? "O" : "X",
                 winner: winner || (gameState.includes("") ? "" : "draw")
             });
         };
 
-        // 更新 UI 畫面
-        function updateUI(winner) {
-            // 更新棋盤文字
-            gameState.forEach((val, i) => {
-                const cell = document.getElementById(`c${i}`);
-                cell.innerText = val;
-                cell.className = `cell ${val.toLowerCase()}`;
-            });
-
-            const statusEl = document.getElementById('game-status');
-
-            if (winner) {
-                isGameActive = false;
-                if (winner === "draw") {
-                    statusEl.innerText = "雙方平手！ 🤝";
-                } else {
-                    statusEl.innerText = `玩家 ${winner} 獲勝了！ 🎉`;
-                }
-            } else {
-                isGameActive = true;
-                statusEl.innerText = `你是 ${myRole} | 輪到: ${currentTurn}`;
-                if (currentTurn === myRole) {
-                    statusEl.style.color = "#28a745";
-                } else {
-                    statusEl.style.color = "#6c757d";
-                }
-            }
-        }
-
-        // 本地判定勝負
-        function checkWinnerLocal(squares) {
+        function checkWinner(s) {
             const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            for (let combo of lines) {
-                const [a, b, c] = combo;
-                if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-                    return squares[a];
-                }
+            for (let [a,b,c] of lines) {
+                if (s[a] && s[a] === s[b] && s[a] === s[c]) return s[a];
             }
             return null;
         }
 
-        // 重置遊戲
-        window.resetGame = () => {
-            updateFirebase({
-                board: Array(9).fill(""),
-                turn: "X",
-                winner: ""
+        function syncUI(winner) {
+            gameState.forEach((val, i) => {
+                const el = document.getElementById(`c${i}`);
+                el.innerText = val;
+                el.className = `cell ${val.toLowerCase()}`;
             });
-        };
 
-        // 輔助函式：寫入資料庫
-        function updateFirebase(data) {
-            set(ref(db, 'rooms/' + currentRoom), data);
+            const statusEl = document.getElementById('game-status');
+            if (winner) {
+                isGameActive = false;
+                statusEl.innerText = winner === "draw" ? "平手！ 🤝" : `玩家 ${winner} 獲勝！ 🎉`;
+                statusEl.style.color = "#28a745";
+            } else {
+                isGameActive = true;
+                statusEl.innerText = `你是 ${myRole} | 輪到: ${currentTurn}`;
+                statusEl.style.color = (currentTurn === myRole) ? "#28a745" : "#6c757d";
+            }
         }
+
+        window.resetGame = () => updateDb({ board: Array(9).fill(""), turn: "X", winner: "" });
+        function updateDb(data) { set(ref(db, 'rooms/' + currentRoom), data); }
     </script>
 </body>
 </html>

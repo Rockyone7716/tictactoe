@@ -3,161 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>經典 OOXX 遊戲</title>
+    <title>OOXX 遠端連線版</title>
     <style>
-        :root {
-            --bg-color: #f0f2f5;
-            --cell-size: 100px;
-            --x-color: #ff4d4d;
-            --o-color: #3b82f6;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: var(--bg-color);
-        }
-
-        h1 { color: #333; margin-bottom: 10px; }
-
-        .status {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-
-        .board {
-            display: grid;
-            grid-template-columns: repeat(3, var(--cell-size));
-            grid-template-rows: repeat(3, var(--cell-size));
-            gap: 10px;
-            background-color: #ccc;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .cell {
-            width: var(--cell-size);
-            height: var(--cell-size);
-            background-color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
-
-        .cell:hover { background-color: #f9f9f9; }
-        .cell.x { color: var(--x-color); }
-        .cell.o { color: var(--o-color); }
-
-        .btn-reset {
-            margin-top: 30px;
-            padding: 10px 25px;
-            font-size: 1rem;
-            background-color: #333;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-
-        .btn-reset:hover { opacity: 0.8; }
+        :root { --bg-color: #f0f2f5; --cell-size: 100px; --x-color: #ff4d4d; --o-color: #3b82f6; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); }
+        .setup { margin-bottom: 20px; text-align: center; }
+        .board { display: grid; grid-template-columns: repeat(3, var(--cell-size)); gap: 10px; background: #ccc; padding: 10px; border-radius: 10px; display: none; }
+        .cell { width: var(--cell-size); height: var(--cell-size); background: white; display: flex; align-items: center; justify-content: center; font-size: 3rem; cursor: pointer; border-radius: 5px; }
+        .cell.x { color: var(--x-color); } .cell.o { color: var(--o-color); }
+        .status { font-size: 1.2rem; margin: 20px; font-weight: bold; }
+        input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
+        button { padding: 8px 15px; cursor: pointer; background: #333; color: white; border: none; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-    <h1>OOXX 經典賽</h1>
-    <div class="status" id="status">輪到玩家 X</div>
+    <h1>OOXX 遠端連線版</h1>
 
-    <div class="board" id="board">
-        <div class="cell" data-index="0"></div>
-        <div class="cell" data-index="1"></div>
-        <div class="cell" data-index="2"></div>
-        <div class="cell" data-index="3"></div>
-        <div class="cell" data-index="4"></div>
-        <div class="cell" data-index="5"></div>
-        <div class="cell" data-index="6"></div>
-        <div class="cell" data-index="7"></div>
-        <div class="cell" data-index="8"></div>
+    <div class="setup" id="setup-area">
+        <input type="text" id="room-id" placeholder="輸入房間號碼 (如: 888)">
+        <button onclick="joinRoom()">進入房間</button>
+        <p style="font-size: 0.8rem; color: #666;">與朋友輸入相同號碼即可連線</p>
     </div>
 
-    <button class="btn-reset" onclick="resetGame()">重新開始</button>
+    <div class="status" id="status">請先進入房間</div>
 
-    <script>
-        const statusDisplay = document.getElementById('status');
-        const cells = document.querySelectorAll('.cell');
-        let gameActive = true;
-        let currentPlayer = "X";
-        let gameState = ["", "", "", "", "", "", "", "", ""];
+    <div class="board" id="board">
+        <div class="cell" onclick="makeMove(0)" id="c0"></div>
+        <div class="cell" onclick="makeMove(1)" id="c1"></div>
+        <div class="cell" onclick="makeMove(2)" id="c2"></div>
+        <div class="cell" onclick="makeMove(3)" id="c3"></div>
+        <div class="cell" onclick="makeMove(4)" id="c4"></div>
+        <div class="cell" onclick="makeMove(5)" id="c5"></div>
+        <div class="cell" onclick="makeMove(6)" id="c6"></div>
+        <div class="cell" onclick="makeMove(7)" id="c7"></div>
+        <div class="cell" onclick="makeMove(8)" id="c8"></div>
+    </div>
 
-        const winningConditions = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8],
-            [0, 3, 6], [1, 4, 7], [2, 5, 8],
-            [0, 4, 8], [2, 4, 6]
-        ];
+    <button onclick="resetGame()" style="margin-top:20px; display:none;" id="reset-btn">重新開始</button>
 
-        function handleCellClick(e) {
-            const clickedCell = e.target;
-            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-            if (gameState[clickedCellIndex] !== "" || !gameActive) return;
+        const firebaseConfig = {
+            apiKey: "AIzaSyBiRD8NX4VkzySZACcbccTn0t8KkHLCWKA",
+            authDomain: "ooxx-test.firebaseapp.com",
+            databaseURL: "https://ooxx-test-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ooxx-test",
+            storageBucket: "ooxx-test.firebasestorage.app",
+            messagingSenderId: "1044547887449",
+            appId: "1:1044547887449:web:1c98e76f50fb36cc952c48"
+        };
 
-            gameState[clickedCellIndex] = currentPlayer;
-            clickedCell.innerText = currentPlayer;
-            clickedCell.classList.add(currentPlayer.toLowerCase());
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        let currentRoom = "";
+        let myRole = ""; // X 或 O
+        let currentTurn = "X";
+        let gameState = Array(9).fill("");
 
-            checkResult();
-        }
-
-        function checkResult() {
-            let roundWon = false;
-            for (let i = 0; i < winningConditions.length; i++) {
-                const [a, b, c] = winningConditions[i];
-                if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
-                    roundWon = true;
-                    break;
+        window.joinRoom = () => {
+            const id = document.getElementById('room-id').value;
+            if (!id) return alert("請輸入房間號碼");
+            currentRoom = id;
+            
+            // 監聽房間數據
+            const roomRef = ref(db, 'rooms/' + currentRoom);
+            onValue(roomRef, (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    // 房間不存在，初始化房間
+                    myRole = "X";
+                    updateRoom({ board: gameState, turn: "X" });
+                } else {
+                    if (!myRole) myRole = "O"; // 第二個進來的人是 O
+                    gameState = data.board;
+                    currentTurn = data.turn;
+                    renderBoard();
+                    checkWinner();
                 }
-            }
+                document.getElementById('setup-area').style.display = 'none';
+                document.getElementById('board').style.display = 'grid';
+                document.getElementById('reset-btn').style.display = 'block';
+                updateStatus();
+            });
+        };
 
-            if (roundWon) {
-                statusDisplay.innerText = `玩家 ${currentPlayer} 獲勝！ 🎉`;
-                gameActive = false;
-                return;
-            }
-
-            if (!gameState.includes("")) {
-                statusDisplay.innerText = "平手！ 🤝";
-                gameActive = false;
-                return;
-            }
-
-            currentPlayer = currentPlayer === "X" ? "O" : "X";
-            statusDisplay.innerText = `輪到玩家 ${currentPlayer}`;
+        function updateRoom(data) {
+            set(ref(db, 'rooms/' + currentRoom), data);
         }
 
-        function resetGame() {
-            gameActive = true;
-            currentPlayer = "X";
-            gameState = ["", "", "", "", "", "", "", "", ""];
-            statusDisplay.innerText = `輪到玩家 X`;
-            cells.forEach(cell => {
-                cell.innerText = "";
-                cell.classList.remove('x', 'o');
+        window.makeMove = (index) => {
+            if (gameState[index] !== "" || currentTurn !== myRole) return;
+            
+            gameState[index] = myRole;
+            const nextTurn = myRole === "X" ? "O" : "X";
+            updateRoom({ board: gameState, turn: nextTurn });
+        };
+
+        function renderBoard() {
+            gameState.forEach((val, i) => {
+                const cell = document.getElementById(`c${i}`);
+                cell.innerText = val;
+                cell.className = `cell ${val.toLowerCase()}`;
             });
         }
 
-        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+        function updateStatus() {
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = `你是 ${myRole} | 現在輪到: ${currentTurn}`;
+        }
+
+        function checkWinner() {
+            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let combo of wins) {
+                const [a, b, c] = combo;
+                if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+                    document.getElementById('status').innerText = `玩家 ${gameState[a]} 獲勝！ 🎉`;
+                    return;
+                }
+            }
+            if (!gameState.includes("")) document.getElementById('status').innerText = "平手！ 🤝";
+        }
+
+        window.resetGame = () => {
+            updateRoom({ board: Array(9).fill(""), turn: "X" });
+        };
     </script>
 </body>
 </html>
